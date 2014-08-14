@@ -8,6 +8,6 @@ namespace Test1
 {
     public interface IWay2Word
     {
-        void Call(int position);
+        int Call(string word, out int numberOfDeadKittens);
     }
 }

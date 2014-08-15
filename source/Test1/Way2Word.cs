@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 
@@ -6,33 +7,49 @@ namespace Test1
 {
     public class Way2Word : IWay2Word
     {
-        private readonly char[] Alphabet = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+        private readonly char[] alphabet = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+        private readonly IDictionary<char, int> dictionary;
+
+        public Way2Word()
+        {
+            dictionary = new Dictionary<char, int>();
+            for (int i = 0; i < alphabet.Length; i++)
+            {
+                dictionary.Add(alphabet[i], i);
+            }
+        }
 
         public int Call(string word, out int numberOfDeadKittens)
         {
             numberOfDeadKittens = 0;
             int position = 0;
+            EvaluateWord(word[0], ref position);
 
             while (true)
             {
                 string requestUriString = string.Concat(Config.Way2WordUri, position);
 
-                HttpWebRequest request = WebRequest.Create(requestUriString) as HttpWebRequest;
-
-                using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+                try
                 {
-                    numberOfDeadKittens++;
-                    position++;
+                    HttpWebRequest request = WebRequest.Create(requestUriString) as HttpWebRequest;
 
-                    StreamReader reader = new StreamReader(response.GetResponseStream());
-                    string output = reader.ReadToEnd();
-
-                    if (word == output)
+                    using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
                     {
-                        break;
-                    }
+                        numberOfDeadKittens++;
+                        position++;
 
-                    EvaluateWord(word[0], ref position);
+                        StreamReader reader = new StreamReader(response.GetResponseStream());
+                        string output = reader.ReadToEnd();
+
+                        if (word == output)
+                        {
+                            break;
+                        }
+                    }
+                }
+                catch
+                {
+                    throw;
                 }
             }
 
@@ -41,21 +58,10 @@ namespace Test1
 
         private void EvaluateWord(char letter, ref int position)
         {
-            for (int i = 0; i < Alphabet.Length; i++)
+            int value;
+            if (dictionary.TryGetValue(letter, out value))
             {
-                if ((int)letter >= (int)Alphabet[i])
-                {
-                    position += 500;
-                }
-                else if ((int)letter <= (int)Alphabet[i])
-                {
-                    if (position <= 500)
-                    {
-                        break;
-                    }
-
-                    position -= 500;
-                }
+                position = value * 1500;
             }
         }
     }
